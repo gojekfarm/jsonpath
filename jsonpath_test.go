@@ -195,6 +195,16 @@ func Test_jsonpath_JsonPathLookup_filter(t *testing.T) {
 		t.Errorf("error: %v", res)
 	}
 
+	res, err = JsonPathLookup(json_data, "$.predictions[*].data[0].price")
+	t.Log(err, res)
+	res_v, ok = res.([]interface{})
+	if !ok {
+		t.Errorf("error: %v", res)
+	}
+	if res_v[0].(float64) != 100 || res_v[1].(float64) != 50 {
+		t.Errorf("error: %v", res)
+	}
+
 	res, err = JsonPathLookup(json_data, "$.store.book[?(@.price > 10)]")
 	t.Log(err, res)
 

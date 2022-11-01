@@ -219,7 +219,7 @@ func tokenize(query string) ([]string, error) {
 }
 
 /*
- op: "root", "key", "idx", "range", "filter", "scan"
+op: "root", "key", "idx", "range", "filter", "scan"
 */
 func parse_token(token string) (op string, key string, args interface{}, err error) {
 	if token == "$" {
@@ -382,14 +382,31 @@ func get_key(obj interface{}, key string) (interface{}, error) {
 }
 
 func get_idx(obj interface{}, idx int) (interface{}, error) {
-	switch reflect.TypeOf(obj).Kind() {
+	objVal := reflect.ValueOf(obj)
+	switch objVal.Kind() {
 	case reflect.Slice:
 		length := reflect.ValueOf(obj).Len()
 		if idx >= 0 {
-			if idx >= length {
-				return nil, fmt.Errorf("index out of range: len: %v, idx: %v", length, idx)
+			res := []interface{}{}
+			for i := 0; i < length; i++ {
+				curr := objVal.Index(i).Interface()
+				currVal := reflect.ValueOf(curr)
+				if currVal.Kind() == reflect.Slice {
+					if idx >= currVal.Len() {
+						continue
+					}
+					res = append(res, currVal.Index(idx).Interface())
+				} else {
+					if idx >= length {
+						return nil, fmt.Errorf("index out of range: len: %v, idx: %v", length, idx)
+					}
+					if i == idx {
+						return curr, nil
+					}
+				}
 			}
-			return reflect.ValueOf(obj).Index(idx).Interface(), nil
+			return res, nil
+
 		} else {
 			// < 0
 			_idx := length + idx
